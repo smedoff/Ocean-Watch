@@ -7,6 +7,8 @@ This R project creates a MP3 animation of the spatial distribution of predictive
 
 ![FinalProduct]([https://github.com/Your_Repository_Name/Your_GIF_Name.gif](https://github.com/smedoff/Ocean-Watch/blob/main/Results/Final.gif])
 
+![GitHub Logo](/Results/Final.gif?raw=true)
+
 *Procedures*
 
 This code executes the following procedures
