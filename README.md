@@ -5,8 +5,6 @@ This R program produces an animation of fishing productivity using a predictive 
 
 This R project creates a MP3 animation of the spatial distribution of predictive fishing productivity based on a fixed effects linear regression. 
 
-![FinalProduct]([https://github.com/Your_Repository_Name/Your_GIF_Name.gif](https://github.com/smedoff/Ocean-Watch/blob/main/Results/Final.gif])
-
 ![GitHub Logo](/Results/Final.gif?raw=true)
 
 *Procedures*
