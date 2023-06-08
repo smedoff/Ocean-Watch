@@ -9,8 +9,6 @@ This R project creates a MP3 animation of the spatial distribution of predictive
 
 *Procedures*
 
-This code executes the following procedures
-
 1.	Extracts spatial environmental data based on the extent of the monthly fishing footprint
 2.	Match the environmental data to the point location of fishing activity based on 1x1 degree grid cells
 3.	Interpolate the linear regression with year and month fixed effects 
