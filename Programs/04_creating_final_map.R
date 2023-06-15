@@ -30,7 +30,14 @@ coef.v <- readRDS(file.path("Results", "Coefficients.RDS"))
   
   # Lets create a map for each month/year that uses the regression values to 
   # predict catch for the entire spatial extent of the enviro vars data sets
-  lapply(1:length(YM.v), FUN = function(ym){
+  
+  #-----
+  # First we will create a data frame of predicted values for out sample 
+  # by looping over every ym. We need to separate this task from the actual map making because 
+  # we need a set range for the legends in the final maps. The legend will be set to the 
+  predicted.l <- lapply(1:length(YM.v), FUN = function(ym){
+    
+    print(ym)
     
     one_ym <- YM.v[ym]
     one_ym_lab <- paste0(substr(one_ym, 5, 6), "/", substr(one_ym, 1, 4))
@@ -46,7 +53,9 @@ coef.v <- readRDS(file.path("Results", "Coefficients.RDS"))
         rename(EV = one_ev) %>% 
         mutate(latitude = round(as.numeric(latitude)),
                longitude = round(as.numeric(longitude)),
-               EV = ifelse(EV == "NaN", NA, EV)) %>% 
+               EV = ifelse(EV == "NaN", NA, EV),
+               mm = as.numeric(mm),
+               yy = as.numeric(yy)) %>% 
         group_by(yy, mm, latitude, longitude) %>% 
         summarize(EV = mean(EV, na.rm = TRUE)) %>% 
         filter(!is.na(EV)) %>% 
@@ -60,6 +69,23 @@ coef.v <- readRDS(file.path("Results", "Coefficients.RDS"))
       mutate(Predicted = Chlorophyll * coef.v["Chlorophyll"] + 
                SST * coef.v["SST"] + 
                Salinity * coef.v["Salinity"])
+    
+  })
+  
+  predicted.df <- do.call(rbind, predicted.l)
+  
+  
+  # Making the maps
+  lapply(1:length(YM.v), FUN = function(ym){
+    
+    print(ym)
+    
+    one_ym <- YM.v[ym]
+    one_ym_lab <- paste0(substr(one_ym, 1, 4), "-", substr(one_ym, 5, 6)) %>% 
+      zoo::as.yearmon() %>% 
+      print()
+    
+    enviro_vars.df <- predicted.l[[ym]]
     
     # Find a map of hawaii 
     library("rnaturalearth")
@@ -77,37 +103,40 @@ coef.v <- readRDS(file.path("Results", "Coefficients.RDS"))
     PS_EV.sf <- enviro_vars.df %>% 
       mutate(longitude = longitude * -1) %>%
       filter(!(longitude %in% c(-161:-154) & latitude %in% c(18:23))) %>% 
-      st_as_sf(coords = c("longitude", "latitude"), crs = st_crs(4135))
+      st_as_sf(coords = c("longitude", "latitude"), crs = st_crs(4135)) 
     
     # Creating a map 
     ggplot() + 
       geom_sf(data = PS_EV.sf, 
-              aes(color = Predicted), size =2) +
+              aes(color = Predicted), size =1.5) +
       scale_color_gradient(low = "red",  
-                           high = "green") +
+                           high = "green",
+                           limits = range(predicted.df$Predicted)) +
       geom_sf(data = usa, fill = "cornsilk") + 
       coord_sf(crs = st_crs(4135), xlim = c(-120, -180), 
                ylim = c(0, 50), 
                expand = FALSE, datum = NA) + 
-      labs(title = paste0("Predicted Skipjack Catch (", one_ym_lab, ")"),
-           subtitle = paste0("Predicted catch of skipjack tuna is estimated using the linear regression: \n", 
-                             round(coef.v["Chlorophyll"], digit = 2), " * Chlor + ",
-                             round(coef.v["SST"], digit = 2), " * SST + ",
-                             round(coef.v["Salinity"], digit = 2), " * Salinity"),
+      labs(title = one_ym_lab,
+           subtitle = "Predicted catch of skipjack tuna using an OLS regression with time fixed effects",
+           #subtitle = paste0("Predicted catch of skipjack tuna is estimated using the linear regression: \n", 
+           #                  round(coef.v["Chlorophyll"], digit = 2), " * Chlor + ",
+           #                  round(coef.v["SST"], digit = 2), " * SST + ",
+           #                  round(coef.v["Salinity"], digit = 2), " * Salinity"),
            color = "Predicted Catch",
            caption = paste0("https://oceanwatch.pifsc.noaa.gov/index.html \n ",
                             "https://www.wcpfc.int/wcpfc-public-domain-aggregated-catcheffort-data-download-pag")) + 
       guides(color = guide_legend(order = 1),
              size  = guide_legend(order = 2)) +
-      theme(title = element_text(size = 5))
-    
-    ggsave(file.path("Results", "Predicted Catch", paste0("PV_", one_ym, ".png")))  
+      theme(title = element_text(size = 5)) 
+    ggsave(file.path("Results", "Predicted Catch", paste0("PV_", one_ym, ".png")),
+           height = 4, width = 4)  
     
   }) #end of lapply month/yr
 
   
   #------------------
   # Create the final animation 
+  library(magick)
   ev_pngs.v <- list.files(file.path("Results", "Predicted Catch"))
   
   ev_mpas.l <- lapply(1:length(ev_pngs.v), FUN = function(f){
@@ -120,7 +149,7 @@ coef.v <- readRDS(file.path("Results", "Coefficients.RDS"))
   })
   
   images <- image_join(ev_mpas.l)
-  animation <- image_animate(images, fps = 5)
+  animation <- image_animate(images, fps = 2)
   image_write(animation, file.path("Results", "Final.gif"))
   
   
