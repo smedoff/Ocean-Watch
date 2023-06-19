@@ -14,6 +14,8 @@ This R project creates a MP3 animation of the spatial distribution of predictive
 3.	Interpolate the linear regression with year and month fixed effects 
 4.	Extrapolate the model and create monthly maps of predictive fishing productivity across the Pacific Ocean
 5.	Create animations to show how predicted productivity changes across time and space
+   
+*Data is provided upon request*
 
 *Background*
 
